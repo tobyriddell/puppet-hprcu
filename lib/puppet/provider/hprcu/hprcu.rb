@@ -63,7 +63,8 @@ EOT
     # "properties other than ensure are only *individually* managed when ensure
     # is set to present and the resource already exists. When a resource state
     # is absent, Puppet ignores any specified resource property."
-    true # Equivalent to: @property_hash[:ensure] == :present, because we force {:ensure => :present} in self.instances
+    true # Equivalent to: @property_hash[:ensure] == :present, because we 
+         # force {:ensure => :present} in self.instances
   end
 
   def self.instances
@@ -71,12 +72,32 @@ EOT
     # * reads the XML that is output by hprcu 
     # * gathers a list of the names of the features (i.e. BIOS settings)
     # * for each feature it gathers the possible options, the current and default options
-
+    #
+    # So it needs hashes mapping:
+    #   property => featureId
+    #   newValue => selectionOptionId
+    #   property => sysDefaultOptionId
 
     if $hprcuXml.nil?
       $hprcuXml = self.fetchXml
     end
 
+    $propertyFeatureIdMap = [
+
+    ]
+
+    $valueSelectionOptionIdMap = [
+
+    ]
+
+    $propertySysDefaultOptionIdMap = [
+
+    ]
+    
+    
+
+
+    # Create a new instance of the provider describing the current state
     propertyLookup = {}
 
     $hprcuXml.elements.each('/hprcu/feature') { |feature|
@@ -96,7 +117,7 @@ EOT
     # Return an array containing a single instance of the resource (by definition there 
     # is only only one instance of the BIOS parameters on the host)
     [
-      new(
+      new (
         :name                => 'default',
         # Force :ensure => :present because as per p.46 of Puppet Types & Providers:
         # "properties other than ensure are only *individually* managed when ensure
@@ -110,8 +131,8 @@ EOT
   end
 
   def self.fetchXml
-    hprcuFilename = 'hprcu_sample.xml'
-    hprcuFileHandle = File.open('hprcu_sample.xml', 'r');
+    hprcuFilename = '/home/toby/Dev/Puppet/puppet-hprcu/hprcu_sample.xml'
+    hprcuFileHandle = File.open(hprcuFilename, 'r');
     $hprcuXml = REXML::Document.new hprcuFileHandle.read()
   end
 
@@ -152,29 +173,46 @@ EOT
 #    @property_hash.clear
 #  end
 
-  def flush
-    if @property_flush[:embeddedserialport]
-      puts "Changing :embeddedserialport to %s" % @property_flush[:embeddedserialport]
-    end
-      
-    if @property_flush[:virtualserialport]
-      puts "Changing :virtualserialport to %s" % @property_flush[:virtualserialport]
-    end
+#def flush
+#  if @property_flush[:embeddedserialport]
+#    puts "Changing :embeddedserialport to %s" % @property_flush[:embeddedserialport]
+#  end
+#    
+#  if @property_flush[:virtualserialport]
+#    puts "Changing :virtualserialport to %s" % @property_flush[:virtualserialport]
+#  end
+#
+#  @property_hash = resource.to_hash
+#end
 
+  def modifyXml(property)
+    require 'ruby-debug';debugger
+
+    # Referring to the data gathered earlier by self.instances, this function
+    # looks up the option_id of the new option value and modifies the XML in
+    # hprcuXml to reflect the new selection
+    #
+    # It needs to know the following variables to substitute into the ERB template:
+    #   featureId
+    #   selectionOptionId
+    #   sysDefaultOptionId
+    #
+    # So it needs hashes mapping:
+    #   property => featureId
+    #   newValue => selectionOptionId
+    #   property => sysDefaultOptionId
+
+    newValue = @property_flush[value]
+
+  end
+
+  def flush
+    @property_flush.keys.each { |property|
+      puts sprintf("Changing %s to %s", property, @property_flush[property])
+      $hprcuXml = modifyXml(property)
+    }
     @property_hash = resource.to_hash
   end
-
-  def modifyXml
-
-  end
-
-#  def flush
-#    @property_flush.keys.each { |property|
-#      puts "Changing %s to %s" % property, @property_flush[:virtualserialport]
-#      $hprcuXml = modifyXml(property)
-#    }
-#    @property_hash = resource.to_hash
-#  end
 
   def initialize(value={})
     super(value)
