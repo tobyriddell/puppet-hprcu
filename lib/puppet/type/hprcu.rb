@@ -24,3 +24,5 @@ Puppet::Type.newtype(:hprcu) do
 		newvalues(:com1irq4io3f8h3ffh, :com2irq3io2f8h2ffh, :com3irq5io3e8h3efh, :disabled)
 	end
 end
+
+# vim:sw=2:ts=2:et:
