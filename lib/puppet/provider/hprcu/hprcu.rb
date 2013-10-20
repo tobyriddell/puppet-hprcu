@@ -7,6 +7,8 @@
 # set_trace_func proc { |event, file, line, id, binding, classname|
 #   printf "%8s %s:%-2d %10s %8s\n", event, file, line, id, classname
 # }
+#
+# $x = inline_template("<%= require 'ruby-debug';debugger; puts 'foo' %>")
 
 require 'puppet'
 require 'rexml/document'
@@ -16,7 +18,8 @@ require 'erb'
 require 'tempfile'
 
 Puppet::Type.type(:hprcu).provide(:hprcu) do
-#    commands :hprcu => '/usr/sbin/hprcu'
+#    commands :hprcu => '/usr/bin/hprcu'
+    commands :hprcu => '/home/toby/Dev/Puppet/puppet-hprcu/fakehprcu'
 
     # No XML until fetched
     $hprcuXML = :absent
@@ -79,23 +82,35 @@ EOT
     #   property => sysDefaultOptionId
 
     if $hprcuXml.nil?
-      $hprcuXml = self.fetchXml
+      self.fetchXml
     end
 
-    $propertyFeatureIdMap = [
+    $property2FeatureIdMap = {}
+    $hprcuXml.elements.each('/hprcu/feature') { |feature|
+      featureName = makeValid(feature.elements['feature_name'].text)
+      featureId = feature.attributes['feature_id']
+      $property2FeatureIdMap[featureName.to_sym] = featureId
+    } # TODO: Do I need a map from symbols or text, to id
 
-    ]
+    $value2SelectionOptionIdMap = {}
+    $propertyName2SysDefaultOptionIdMap = {}
+    $hprcuXml.elements.each('/hprcu/feature') { |feature|
+      featureName = makeValid(feature.elements['feature_name'].text).to_sym
+      $value2SelectionOptionIdMap[featureName] = {}
 
-    $valueSelectionOptionIdMap = [
+      selectionOptionId = makeValid(feature.attributes['selection_option_id'])
+      sysDefaultOptionId = makeValid(feature.attributes['sys_default_option_id'])
 
-    ]
+      optionName2Id = {}
+      feature.get_elements('option').each { |option| 
+        optionId =  option.attributes['option_id']
+        optionName = option.get_elements('option_name').first.get_text.to_s
+        optionName2Id[makeValid(optionName).to_sym] = optionId
+      }
 
-    $propertySysDefaultOptionIdMap = [
-
-    ]
-    
-    
-
+      $value2SelectionOptionIdMap[featureName] = optionName2Id
+      $propertyName2SysDefaultOptionIdMap[featureName] = sysDefaultOptionId
+    } 
 
     # Create a new instance of the provider describing the current state
     propertyLookup = {}
@@ -117,7 +132,7 @@ EOT
     # Return an array containing a single instance of the resource (by definition there 
     # is only only one instance of the BIOS parameters on the host)
     [
-      new (
+      new(
         :name                => 'default',
         # Force :ensure => :present because as per p.46 of Puppet Types & Providers:
         # "properties other than ensure are only *individually* managed when ensure
@@ -131,9 +146,13 @@ EOT
   end
 
   def self.fetchXml
-    hprcuFilename = '/home/toby/Dev/Puppet/puppet-hprcu/hprcu_sample.xml'
-    hprcuFileHandle = File.open(hprcuFilename, 'r');
+    tempfile = Tempfile.new('puppethprcu')
+    tempfile.close
+    hprcu('-s', '-f', tempfile.path)
+
+    hprcuFileHandle = File.open(tempfile.path, 'r');
     $hprcuXml = REXML::Document.new hprcuFileHandle.read()
+    hprcuFileHandle.close
   end
 
   def self.prefetch(resources)
@@ -186,8 +205,6 @@ EOT
 #end
 
   def modifyXml(property)
-    require 'ruby-debug';debugger
-
     # Referring to the data gathered earlier by self.instances, this function
     # looks up the option_id of the new option value and modifies the XML in
     # hprcuXml to reflect the new selection
@@ -202,8 +219,16 @@ EOT
     #   newValue => selectionOptionId
     #   property => sysDefaultOptionId
 
-    newValue = @property_flush[value]
+    newValue = @property_flush[property]
 
+    featureId = $property2FeatureIdMap[property]
+    selectionOptionId = $value2SelectionOptionIdMap[property][newValue]
+    sysDefaultOptionId = $propertyName2SysDefaultOptionIdMap[property]
+
+    xslt = XML::XSLT.new()
+    xslt.xml = $hprcuXml
+    xslt.xsl = ERB.new($xsltTemplate).result(binding)
+    $hprcuXml = REXML::Document.new xslt.serve()
   end
 
   def flush
@@ -211,6 +236,14 @@ EOT
       puts sprintf("Changing %s to %s", property, @property_flush[property])
       $hprcuXml = modifyXml(property)
     }
+
+    tempfile = Tempfile.new('puppethprcu')
+    tempfile.write($hprcuXml)
+    tempfile.close
+    hprcu('-l', '-f', tempfile.path)
+#   tempfile.unlink
+    require 'ruby-debug';debugger
+
     @property_hash = resource.to_hash
   end
 
