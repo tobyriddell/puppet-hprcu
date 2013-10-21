@@ -47,11 +47,26 @@ Puppet::Type.type(:hprcu).provide(:hprcu) do
 </xsl:stylesheet>
 EOT
 
-  mk_resource_methods
+  # This is a modified version of mk_resource_methods from provider.rb
+  def self.my_mk_resource_methods
+    [resource_type.validproperties, resource_type.parameters].flatten.each do |attr|
+      attr = attr.intern
+      next if attr == :name
+      define_method(attr) do
+        @property_hash[attr] || :absent
+      end
+
+      define_method(attr.to_s + "=") do |val|
+        @property_flush[attr] = val
+      end
+    end
+  end
+
+  my_mk_resource_methods
 
   # Map from (e.g.) 'Intel(R) Hyperthreading Options' to 'intelrhyperthreadingoptions'
-  # Note that the names of the setters must be 'Puppet-friendly', i.e. valid 
-  # as per grammar.ra in the Puppet source
+  # Note that the names of the setters must be 'Puppet-friendly', i.e. valid as per 
+  # grammar.ra in the Puppet source
   $map2Valid = {} 
   def self.makeValid(invalid)
     if ! $map2Valid.has_key?(invalid)
@@ -75,11 +90,6 @@ EOT
     # * reads the XML that is output by hprcu 
     # * gathers a list of the names of the features (i.e. BIOS settings)
     # * for each feature it gathers the possible options, the current and default options
-    #
-    # So it needs hashes mapping:
-    #   property => featureId
-    #   newValue => selectionOptionId
-    #   property => sysDefaultOptionId
 
     if $hprcuXml.nil?
       self.fetchXml
@@ -90,7 +100,7 @@ EOT
       featureName = makeValid(feature.elements['feature_name'].text)
       featureId = feature.attributes['feature_id']
       $property2FeatureIdMap[featureName.to_sym] = featureId
-    } # TODO: Do I need a map from symbols or text, to id
+    }
 
     $value2SelectionOptionIdMap = {}
     $propertyName2SysDefaultOptionIdMap = {}
@@ -130,7 +140,7 @@ EOT
     }
   
     # Return an array containing a single instance of the resource (by definition there 
-    # is only only one instance of the BIOS parameters on the host)
+    # is only only one instance of the BIOS parameters per host)
     [
       new(
         :name                => 'default',
@@ -166,59 +176,10 @@ EOT
     end
   end
 
-#  def flush
-#   require 'ruby-debug';debugger
-#    tempfile = Tempfile.new('puppethprcu')
-#    tempfile.write($hprcuXml)
-#    tempfile.close
-#
-#    # ret = system('/home/toby/Dev/Puppet/prevtec-biostunable/fakeconrep/conrep', '-l', tempfile.path)
-#    # TODO: try conrep('-l', tempfile.path)
-#    #if ret.nil?
-#    # fail("Execution of hprcu flush command failed")
-#    #elsif ret == false
-#    # warn("hprcu flush command exited with non-zero exit code")
-#    #else
-#    ##   tempfile.unlink
-#    #end
-#       
-#    # Create a file in /tmp that records the tunable changes made by the provider
-#    hprcuUpdateFile = '/tmp/hprcuupdate'
-#    File.new(hprcuUpdateFile, File::CREAT|File::TRUNC|File::RDWR, 0644)
-#    statusFile = File.open(hprcuUpdateFile, 'w')
-#    statusFile.write($changes)
-#    statusFile.close()
-#
-#    @property_hash.clear
-#  end
-
-#def flush
-#  if @property_flush[:embeddedserialport]
-#    puts "Changing :embeddedserialport to %s" % @property_flush[:embeddedserialport]
-#  end
-#    
-#  if @property_flush[:virtualserialport]
-#    puts "Changing :virtualserialport to %s" % @property_flush[:virtualserialport]
-#  end
-#
-#  @property_hash = resource.to_hash
-#end
-
   def modifyXml(property)
     # Referring to the data gathered earlier by self.instances, this function
     # looks up the option_id of the new option value and modifies the XML in
     # hprcuXml to reflect the new selection
-    #
-    # It needs to know the following variables to substitute into the ERB template:
-    #   featureId
-    #   selectionOptionId
-    #   sysDefaultOptionId
-    #
-    # So it needs hashes mapping:
-    #   property => featureId
-    #   newValue => selectionOptionId
-    #   property => sysDefaultOptionId
-
     newValue = @property_flush[property]
 
     featureId = $property2FeatureIdMap[property]
@@ -241,8 +202,8 @@ EOT
     tempfile.write($hprcuXml)
     tempfile.close
     hprcu('-l', '-f', tempfile.path)
-#   tempfile.unlink
-    require 'ruby-debug';debugger
+#    require 'ruby-debug';debugger
+    tempfile.unlink
 
     @property_hash = resource.to_hash
   end
@@ -252,63 +213,17 @@ EOT
     @property_flush = {}
   end
 
-  # Definitions of property-setters
-  # Note that the names of the setters must be 'Puppet-friendly', i.e. valid 
-  # as per grammar.ra in the Puppet source
-  def embeddedserialport=(value)
-    @property_flush[:embeddedserialport] = value
-  end
+#   # Definitions of property-setters
+#   # Note that the names of the setters must be 'Puppet-friendly', i.e. valid 
+#   # as per grammar.ra in the Puppet source
+#   def embeddedserialport=(value)
+#     @property_flush[:embeddedserialport] = value
+#   end
+# 
+#   def virtualserialport=(value)
+#     @property_flush[:virtualserialport] = value
+#   end
 
-  def virtualserialport=(value)
-    @property_flush[:virtualserialport] = value
-  end
-
-#  def embeddedserialport=(value)
-#    featureId = 23
-#    sysDefaultOptionId = 1
-#    optionName2Id = {
-#      :com1irq4io3f8h3ffh => 1,
-#      :com2irq3io2f8h2ffh => 2,
-#      :com3irq5io3e8h3efh => 3,
-#      :disabled => 4,
-#    }
-#    selectionOptionId = optionName2Id[value]  
-#
-#    xslt = XML::XSLT.new()
-#
-#    xslt.xml = $hprcuXml
-#    xslt.xsl = ERB.new($xsltTemplate).result(binding)
-#
-#    $changes.push("Changed value for 'embeddedserialport' to '#{value}'\n")
-#
-#      require 'ruby-debug';debugger
-#    $hprcuXml = REXML::Document.new xslt.serve()
-#
-#    @property_hash[:embeddedserialport] = value
-#  end
-#
-#  def virtualserialport=(value)
-#    featureId = 85
-#    sysDefaultOptionId = 2
-#    optionName2Id = {
-#      :com1irq4io3f8h3ffh => 1,
-#      :com2irq3io2f8h2ffh => 2,
-#      :com3irq5io3e8h3efh => 3,
-#      :disabled => 4,
-#    }
-#    selectionOptionId = optionName2Id[value]  
-#
-#    xslt = XML::XSLT.new()
-#
-#    xslt.xml = $hprcuXml
-#    xslt.xsl = ERB.new($xsltTemplate).result(binding)
-#
-#    $changes.push("Changed value for 'virtualserialport' to '#{value}'\n")
-#
-#      require 'ruby-debug';debugger
-#    $hprcuXml = REXML::Document.new xslt.serve()
-#    @property_hash[:virtualserialport] = value
-#  end
 end
 
 # vim:sw=2:ts=2:et: 
