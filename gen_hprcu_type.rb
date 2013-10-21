@@ -11,18 +11,28 @@ require 'puppet'
 require 'rexml/document'
 require 'erb'
 
-$puppetFriendlyLookup = {}
+puts <<EOT
+# hprcu type
 
-$newpropertyTemplate = <<EOT
-	newproperty(<%= propertyName %>) do
-		defaultto <%= defaultValue %>
-		newvalues(<%= validValues.join(', ') %>)
+Puppet::Type.newtype(:hprcu) do
+	@doc = "" # TODO
+
+  # Type must be ensurable as we must use exists?, because as per p. 46 of
+Puppet Types
+  # and Providers: properties other than ensure are only *individually*
+  # managed when ensure is set to present and the resource already
+  # exists. When a resource state is absent, Puppet ignores any specified
+  # resource property.
+  ensurable
+
+	newparam(:name, :namevar => true) do
 	end
 
 EOT
 
 # Make (and remember) a Puppet-friendly property name, or if one already exists just 
 # return it
+$puppetFriendlyLookup = {}
 def puppetFriendly(unfriendly)
 	if ! $puppetFriendlyLookup.has_key?(unfriendly)
 		friendly = unfriendly.downcase.gsub(/[- ()_\/:;]/,'')
@@ -31,20 +41,16 @@ def puppetFriendly(unfriendly)
 	$puppetFriendlyLookup[unfriendly]
 end
 
-hprcuFilename = 'hprcu_sample.xml'
-hprcuFileHandle = File.open('hprcu_sample.xml', 'r');
-hprcuXml = REXML::Document.new hprcuFileHandle.read()
-
-puts <<EOT
-# hprcu type
-
-Puppet::Type.newtype(:hprcu) do
-	@doc = "" # TODO
-
-	newparam(:name, :namevar => true) do
+$newpropertyTemplate = <<EOT
+	newproperty(<%= propertyName %>) do
+		newvalues(<%= validValues.join(', ') %>)
 	end
 
 EOT
+
+hprcuFilename = 'hprcu_sample.xml'
+hprcuFileHandle = File.open('hprcu_sample.xml', 'r');
+hprcuXml = REXML::Document.new hprcuFileHandle.read()
 
 hprcuXml.root.elements.each('/hprcu/feature') { |feature| 
 	propertyName = ''
@@ -62,11 +68,11 @@ hprcuXml.root.elements.each('/hprcu/feature') { |feature|
 		}
 	}
 
-	defaultValue = propertyHash[feature.attributes['sys_default_option_id']]
-
 	puts ERB.new($newpropertyTemplate).result(binding)
 }
 
 puts <<EOT
 end
 EOT
+
+# vim:sw=2:ts=2:et:
