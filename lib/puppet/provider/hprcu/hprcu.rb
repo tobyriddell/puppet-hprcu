@@ -50,6 +50,7 @@ EOT
   # This is a modified version of mk_resource_methods from provider.rb
   def self.my_mk_resource_methods
     [resource_type.validproperties, resource_type.parameters].flatten.each do |attr|
+#      attr = symbolize(attr)
       attr = attr.intern
       next if attr == :name
       define_method(attr) do
@@ -70,7 +71,12 @@ EOT
   $map2Valid = {} 
   def self.makeValid(invalid)
     if ! $map2Valid.has_key?(invalid)
-      valid = invalid.downcase.gsub(/[- ()_\/:;]/,'')
+      # Make into a valid puppet symbol by:
+      # 1) Changing to lowercase
+      # 2) Removing special characters
+      # 3) Prepending 'i' if it starts with digits
+      # 4) Removing dots if it ends with dots + numbers
+      valid = invalid.downcase.gsub(/[- ()_\/:;]/,'').sub(/^([0-9]+)/, 'i\1').sub(/\.([0-9]+)$/, '\1')
       $map2Valid[invalid] = valid
     end
     $map2Valid[invalid]
@@ -105,6 +111,9 @@ EOT
     $value2SelectionOptionIdMap = {}
     $propertyName2SysDefaultOptionIdMap = {}
     $hprcuXml.elements.each('/hprcu/feature') { |feature|
+      # Skip features which aren't of type 'option' (other types are 'string' and 'number')
+      next unless feature.attributes['feature_type'] == 'option'
+
       featureName = makeValid(feature.elements['feature_name'].text).to_sym
       $value2SelectionOptionIdMap[featureName] = {}
 
@@ -126,6 +135,9 @@ EOT
     propertyLookup = {}
 
     $hprcuXml.elements.each('/hprcu/feature') { |feature|
+      # Skip features which aren't of type 'option' (other types are 'string' and 'number')
+      next unless feature.attributes['feature_type'] == 'option'
+
       selectionOptionId = feature.attributes['selection_option_id']
       featureName = feature.elements['feature_name'].text
        
@@ -193,17 +205,20 @@ EOT
   end
 
   def flush
+    recordOfChange = '/tmp/hprcu_changes'
+    recordFile = File.open(recordOfChange, 'w+')
     @property_flush.keys.each { |property|
+      recordFile.write( sprintf("%s: Changing %s to %s", Time.now, property, @property_flush[property] ))
       puts sprintf("Changing %s to %s", property, @property_flush[property])
       $hprcuXml = modifyXml(property)
     }
+    recordFile.close
 
     tempfile = Tempfile.new('puppethprcu')
     tempfile.write($hprcuXml)
     tempfile.close
     hprcu('-l', '-f', tempfile.path)
 #    require 'ruby-debug';debugger
-    tempfile.unlink
 
     @property_hash = resource.to_hash
   end
@@ -212,18 +227,6 @@ EOT
     super(value)
     @property_flush = {}
   end
-
-#   # Definitions of property-setters
-#   # Note that the names of the setters must be 'Puppet-friendly', i.e. valid 
-#   # as per grammar.ra in the Puppet source
-#   def embeddedserialport=(value)
-#     @property_flush[:embeddedserialport] = value
-#   end
-# 
-#   def virtualserialport=(value)
-#     @property_flush[:virtualserialport] = value
-#   end
-
 end
 
 # vim:sw=2:ts=2:et: 
