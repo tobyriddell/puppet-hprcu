@@ -110,9 +110,11 @@ EOT
 
     $value2SelectionOptionIdMap = {}
     $propertyName2SysDefaultOptionIdMap = {}
-    $hprcuXml.elements.each('/hprcu/feature') { |feature|
-      # Skip features which aren't of type 'option' (other types are 'string' and 'number')
-      next unless feature.attributes['feature_type'] == 'option'
+    require 'ruby-debug';debugger
+    $hprcuXml.elements.each('/hprcu/feature[@feature_type="option"]') { |feature|
+#    $hprcuXml.elements.each('/hprcu/feature') { |feature|
+#      # Skip features which aren't of type 'option' (other types are 'string' and 'number')
+#      next unless feature.attributes['feature_type'] == 'option'
 
       featureName = makeValid(feature.elements['feature_name'].text).to_sym
       $value2SelectionOptionIdMap[featureName] = {}
@@ -134,9 +136,10 @@ EOT
     # Create a new instance of the provider describing the current state
     propertyLookup = {}
 
-    $hprcuXml.elements.each('/hprcu/feature') { |feature|
-      # Skip features which aren't of type 'option' (other types are 'string' and 'number')
-      next unless feature.attributes['feature_type'] == 'option'
+    $hprcuXml.elements.each('/hprcu/feature[@feature_type="option"]') { |feature|
+#    $hprcuXml.elements.each('/hprcu/feature') { |feature|
+#      # Skip features which aren't of type 'option' (other types are 'string' and 'number')
+#      next unless feature.attributes['feature_type'] == 'option'
 
       selectionOptionId = feature.attributes['selection_option_id']
       featureName = feature.elements['feature_name'].text
@@ -153,7 +156,7 @@ EOT
 
     # Set some other properties that don't come from the XML
     propertyLookup[:name] = 'default'
-    # Force :ensure = :present because as per p.46 of Puppet Types & Providers:
+    # Force :ensure = :present because, as per p.46 of Puppet Types & Providers,
     # "properties other than ensure are only *individually* managed when ensure
     # is set to present and the resource already exists. When a resource state
     # is absent, Puppet ignores any specified resource property."
@@ -215,7 +218,6 @@ EOT
     tempfile.write($hprcuXml)
     tempfile.close
     hprcu('-l', '-f', tempfile.path)
-#    require 'ruby-debug';debugger
 
     @property_hash = resource.to_hash
   end
