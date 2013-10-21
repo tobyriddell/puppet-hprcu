@@ -17,28 +17,34 @@ puts <<EOT
 Puppet::Type.newtype(:hprcu) do
 	@doc = "" # TODO
 
-  # Type must be ensurable as we must use exists?, because as per p. 46 of
-Puppet Types
-  # and Providers: properties other than ensure are only *individually*
-  # managed when ensure is set to present and the resource already
-  # exists. When a resource state is absent, Puppet ignores any specified
-  # resource property.
-  ensurable
+	# Type must be ensurable as we must use exists?, because as per p. 46 of 
+	# Puppet Types and Providers: properties other than ensure are only 
+	# *individually* managed when ensure is set to present and the resource 
+	# already exists. When a resource state is absent, Puppet ignores any 
+	# specified # resource property.
+	ensurable
 
 	newparam(:name, :namevar => true) do
 	end
 
 EOT
 
-# Make (and remember) a Puppet-friendly property name, or if one already exists just 
-# return it
-$puppetFriendlyLookup = {}
-def puppetFriendly(unfriendly)
-	if ! $puppetFriendlyLookup.has_key?(unfriendly)
-		friendly = unfriendly.downcase.gsub(/[- ()_\/:;]/,'')
-		$puppetFriendlyLookup[unfriendly] = friendly
-	end
-	$puppetFriendlyLookup[unfriendly]
+# Map from (e.g.) 'Intel(R) Hyperthreading Options' to 'intelrhyperthreadingoptions'
+# Note that the names of the setters must be 'Puppet-friendly', i.e. valid as per
+# grammar.ra in the Puppet source
+$map2Valid = {}
+def makeValid(invalid)
+  if ! $map2Valid.has_key?(invalid)
+    # Perform following transforms
+    # 1. Upper- to lower-case
+    # 2. Leading digits have colon prefix added
+    # 3. Trailing digits with decimal point have point removed
+    valid = invalid.downcase.gsub(/[- ()_\/:;]/,'').
+        sub(/^([0-9]+)/, ':\1').
+        sub(/\.([0-9]+)$/, '\1')
+    $map2Valid[invalid] = valid
+  end
+  $map2Valid[invalid]
 end
 
 $newpropertyTemplate = <<EOT
@@ -55,16 +61,14 @@ hprcuXml = REXML::Document.new hprcuFileHandle.read()
 hprcuXml.root.elements.each('/hprcu/feature') { |feature| 
 	propertyName = ''
 	validValues = []
-	propertyHash = {}
 
 	feature.elements.each('feature_name') { |feature_name| 
-		propertyName = ':' + puppetFriendly(feature_name.text)
+		propertyName = ':' + makeValid(feature_name.text)
 	}
 
 	feature.elements.each('option') { |option| 
 		option.elements.each('option_name') { |on| 
-			validValues.push(':' + puppetFriendly(on.text))
-			propertyHash[option.attributes['option_id']] = ':' + puppetFriendly(on.text)
+			validValues.push(':' + makeValid(on.text))
 		}
 	}
 
@@ -73,6 +77,7 @@ hprcuXml.root.elements.each('/hprcu/feature') { |feature|
 
 puts <<EOT
 end
+# vim:sw=2:ts=2:et:
 EOT
 
 # vim:sw=2:ts=2:et:
