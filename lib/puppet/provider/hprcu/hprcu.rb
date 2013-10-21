@@ -150,21 +150,18 @@ EOT
   
       propertyLookup[makeValid(featureName).to_sym] = optionId2Name[selectionOptionId].to_sym
     }
-  
+
+    # Set some other properties that don't come from the XML
+    propertyLookup[:name] = 'default'
+    # Force :ensure = :present because as per p.46 of Puppet Types & Providers:
+    # "properties other than ensure are only *individually* managed when ensure
+    # is set to present and the resource already exists. When a resource state
+    # is absent, Puppet ignores any specified resource property."
+    propertyLookup[:ensure] = :present
+
     # Return an array containing a single instance of the resource (by definition there 
     # is only only one instance of the BIOS parameters per host)
-    [
-      new(
-        :name                => 'default',
-        # Force :ensure => :present because as per p.46 of Puppet Types & Providers:
-        # "properties other than ensure are only *individually* managed when ensure
-        # is set to present and the resource already exists. When a resource state
-        # is absent, Puppet ignores any specified resource property."
-        :ensure              => :present,
-        :embeddedserialport  => propertyLookup[:embeddedserialport],
-        :virtualserialport   => propertyLookup[:virtualserialport]
-      ) 
-    ]
+    [ new(propertyLookup) ]
   end
 
   def self.fetchXml
