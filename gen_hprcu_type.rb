@@ -35,13 +35,12 @@ EOT
 $map2Valid = {}
 def makeValid(invalid)
   if ! $map2Valid.has_key?(invalid)
-    # Perform following transforms
-    # 1. Upper- to lower-case
-    # 2. Leading digits have colon prefix added
-    # 3. Trailing digits with decimal point have point removed
-    valid = invalid.downcase.gsub(/[- ()_\/:;]/,'').
-        sub(/^([0-9]+)/, ':\1').
-        sub(/\.([0-9]+)$/, '\1')
+    # Make into a valid puppet symbol by:
+    # 1) Changing to lowercase
+    # 2) Removing special characters
+    # 3) Prepending 'i' if it starts with digits
+    # 4) Removing dots if it ends with dots + numbers
+    valid = invalid.downcase.gsub(/[- ()_\/:;,]/,'').sub(/^([0-9]+)/, 'i\1').sub(/\.([0-9]+)$/, '\1')
     $map2Valid[invalid] = valid
   end
   $map2Valid[invalid]
