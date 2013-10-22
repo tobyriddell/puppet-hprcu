@@ -18,8 +18,8 @@ require 'erb'
 require 'tempfile'
 
 Puppet::Type.type(:hprcu).provide(:hprcu) do
-#    commands :hprcu => '/usr/bin/hprcu'
-    commands :hprcu => '/home/toby/Dev/Puppet/puppet-hprcu/fakehprcu'
+    commands :hprcu => '/usr/bin/hprcu'
+#    commands :hprcu => '/home/toby/Dev/Puppet/puppet-hprcu/fakehprcu'
 
     # No XML until fetched
     $hprcuXML = :absent
