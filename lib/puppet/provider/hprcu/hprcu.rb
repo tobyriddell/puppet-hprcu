@@ -40,7 +40,7 @@ Puppet::Type.type(:hprcu).provide(:hprcu) do
     </xsl:template>
 
     <xsl:template match="/hprcu/feature[@feature_id='<%= featureId %>']">
-        <feature feature_id='<%= featureId %>' selection_option_id='<%= selectionOptionId %>'  sys_default_option_id='<%= sysDefaultOptionId %>' feature_type='option'>
+        <feature feature_id='<%= featureId %>' selected_option_id='<%= selectedOptionId %>'  sys_default_option_id='<%= sysDefaultOptionId %>' feature_type='option'>
       <xsl:copy-of select="node()"/>
     </feature>
     </xsl:template>
@@ -76,7 +76,7 @@ EOT
       # 2) Removing special characters
       # 3) Prepending 'i' if it starts with digits
       # 4) Removing dots if it ends with dots + numbers
-      valid = invalid.downcase.gsub(/[- ()_\/:;]/,'').sub(/^([0-9]+)/, 'i\1').sub(/\.([0-9]+)$/, '\1')
+      valid = invalid.downcase.gsub(/[- ()_\/:;,]/,'').sub(/^([0-9]+)/, 'i\1').sub(/\.([0-9]+)$/, '\1')
       $map2Valid[invalid] = valid
     end
     $map2Valid[invalid]
@@ -110,48 +110,44 @@ EOT
 
     $value2SelectionOptionIdMap = {}
     $propertyName2SysDefaultOptionIdMap = {}
+    propertyLookup = {}
     require 'ruby-debug';debugger
     $hprcuXml.elements.each('/hprcu/feature[@feature_type="option"]') { |feature|
-#    $hprcuXml.elements.each('/hprcu/feature') { |feature|
-#      # Skip features which aren't of type 'option' (other types are 'string' and 'number')
-#      next unless feature.attributes['feature_type'] == 'option'
-
       featureName = makeValid(feature.elements['feature_name'].text).to_sym
       $value2SelectionOptionIdMap[featureName] = {}
-
-      selectionOptionId = makeValid(feature.attributes['selection_option_id'])
       sysDefaultOptionId = makeValid(feature.attributes['sys_default_option_id'])
 
       optionName2Id = {}
       feature.get_elements('option').each { |option| 
-        optionId =  option.attributes['option_id']
+        optionId = option.attributes['option_id']
         optionName = option.get_elements('option_name').first.get_text.to_s
         optionName2Id[makeValid(optionName).to_sym] = optionId
       }
 
       $value2SelectionOptionIdMap[featureName] = optionName2Id
       $propertyName2SysDefaultOptionIdMap[featureName] = sysDefaultOptionId
+
+# TODO: Potentially eliminate the second loop through the XML that follows by implementing the followig commented code - need to test
+#      selectedOptionId = feature.attributes['selected_option_id']
+#      optionId2Name = optionName2Id.invert
+#      propertyLookup[featureName] = optionId2Name[selectedOptionId].to_sym
     } 
 
     # Create a new instance of the provider describing the current state
-    propertyLookup = {}
-
     $hprcuXml.elements.each('/hprcu/feature[@feature_type="option"]') { |feature|
-#    $hprcuXml.elements.each('/hprcu/feature') { |feature|
-#      # Skip features which aren't of type 'option' (other types are 'string' and 'number')
-#      next unless feature.attributes['feature_type'] == 'option'
+      featureName = makeValid(feature.elements['feature_name'].text).to_sym
 
-      selectionOptionId = feature.attributes['selection_option_id']
-      featureName = feature.elements['feature_name'].text
-       
+      selectedOptionId = feature.attributes['selected_option_id']
+
+      # TODO: Why not just invert optionName2Id and do one loop over all the feature elements instead of two?
       optionId2Name = {}
       feature.get_elements('option').each { |option| 
-        optionId =  option.attributes['option_id']
+        optionId = option.attributes['option_id']
         optionName = option.get_elements('option_name').first.get_text.to_s
         optionId2Name[optionId] = makeValid(optionName)
       }
   
-      propertyLookup[makeValid(featureName).to_sym] = optionId2Name[selectionOptionId].to_sym
+      propertyLookup[featureName] = optionId2Name[selectedOptionId].to_sym
     }
 
     # Set some other properties that don't come from the XML
@@ -195,7 +191,7 @@ EOT
     newValue = @property_flush[property]
 
     featureId = $property2FeatureIdMap[property]
-    selectionOptionId = $value2SelectionOptionIdMap[property][newValue]
+    selectedOptionId = $value2SelectionOptionIdMap[property][newValue]
     sysDefaultOptionId = $propertyName2SysDefaultOptionIdMap[property]
 
     xslt = XML::XSLT.new()
