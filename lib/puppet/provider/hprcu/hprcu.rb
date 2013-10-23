@@ -18,8 +18,9 @@ require 'erb'
 require 'tempfile'
 
 Puppet::Type.type(:hprcu).provide(:hprcu) do
-    commands :hprcu => '/usr/bin/hprcu'
-#    commands :hprcu => '/home/toby/Dev/Puppet/puppet-hprcu/fakehprcu'
+#    commands :hprcu => '/usr/bin/hprcu'
+# For testing:
+    commands :hprcu => '/home/toby/Dev/Puppet/puppet-hprcu/fakehprcu'
 
     # No XML until fetched
     $hprcuXML = :absent
@@ -51,7 +52,9 @@ EOT
   def self.my_mk_resource_methods
     [resource_type.validproperties, resource_type.parameters].flatten.each do |attr|
 #      attr = symbolize(attr)
-      attr = attr.intern
+      if attr.class != Symbol
+        attr = attr.intern
+      end
       next if attr == :name
       define_method(attr) do
         @property_hash[attr] || :absent
@@ -111,7 +114,7 @@ EOT
     $value2SelectionOptionIdMap = {}
     $propertyName2SysDefaultOptionIdMap = {}
     propertyLookup = {}
-    require 'ruby-debug';debugger
+#    require 'ruby-debug';debugger
     $hprcuXml.elements.each('/hprcu/feature[@feature_type="option"]') { |feature|
       featureName = makeValid(feature.elements['feature_name'].text).to_sym
       $value2SelectionOptionIdMap[featureName] = {}
@@ -121,7 +124,8 @@ EOT
       feature.get_elements('option').each { |option| 
         optionId = option.attributes['option_id']
         optionName = option.get_elements('option_name').first.get_text.to_s
-        optionName2Id[makeValid(optionName).to_sym] = optionId
+#        optionName2Id[makeValid(optionName).to_sym] = optionId
+        optionName2Id[optionName] = optionId
       }
 
       $value2SelectionOptionIdMap[featureName] = optionName2Id
@@ -144,10 +148,13 @@ EOT
       feature.get_elements('option').each { |option| 
         optionId = option.attributes['option_id']
         optionName = option.get_elements('option_name').first.get_text.to_s
-        optionId2Name[optionId] = makeValid(optionName)
+#        optionId2Name[optionId] = makeValid(optionName)
+        optionId2Name[optionId] = optionName
       }
+    require 'ruby-debug';debugger
   
-      propertyLookup[featureName] = optionId2Name[selectedOptionId].to_sym
+#      propertyLookup[featureName] = optionId2Name[selectedOptionId].to_sym
+      propertyLookup[featureName] = optionId2Name[selectedOptionId]
     }
 
     # Set some other properties that don't come from the XML
