@@ -3,14 +3,14 @@
 		<product_name>ProLiant DL380p Gen8</product_name>
 		<system_rom_family>P70</system_rom_family>
 	</informational>
-		<feature feature_id='23' selection_option_id='2' sys_default_option_id='1' feature_type='option'>
+		<feature feature_id='23' selected_option_id='2' sys_default_option_id='1' feature_type='option'>
 			<feature_name>Embedded Serial Port</feature_name>
 			<option option_id='1'><option_name>COM 1; IRQ4; IO: 3F8h-3FFh</option_name></option>
 			<option option_id='2'><option_name>COM 2; IRQ3; IO: 2F8h-2FFh</option_name></option>
 			<option option_id='3'><option_name>COM 3; IRQ5; IO: 3E8h-3EFh</option_name></option>
 			<option option_id='4'><option_name>Disabled</option_name></option>
 		</feature>
-		<feature feature_id='85' selection_option_id='4' sys_default_option_id='2' feature_type='option'>
+		<feature feature_id='85' selected_option_id='4' sys_default_option_id='2' feature_type='option'>
 			<feature_name>Virtual Serial Port</feature_name>
 			<option option_id='1'><option_name>COM 1; IRQ4; IO: 3F8h-3FFh</option_name></option>
 			<option option_id='2'><option_name>COM 2; IRQ3; IO: 2F8h-2FFh</option_name></option>
@@ -18,25 +18,25 @@
 			<option option_id='4'><option_name>Disabled</option_name></option>
 		</feature>
 
-		<feature feature_id='135' selection_option_id='2' sys_default_option_id='1' feature_type='option'>
+		<feature feature_id='135' selected_option_id='2' sys_default_option_id='1' feature_type='option'>
 			<feature_name>No-Execute Memory Protection</feature_name>
 			<option option_id='1'><option_name>Enabled</option_name></option>
 			<option option_id='2'><option_name>Disabled</option_name></option>
 		</feature>
 
-		<feature feature_id='176' selection_option_id='1' sys_default_option_id='1' feature_type='option'>
+		<feature feature_id='176' selected_option_id='1' sys_default_option_id='1' feature_type='option'>
 			<feature_name>Intel(R) Hyperthreading Options</feature_name>
 			<option option_id='1'><option_name>Enabled</option_name></option>
 			<option option_id='2'><option_name>Disabled</option_name></option>
 		</feature>
 
-		<feature feature_id='181' selection_option_id='1' sys_default_option_id='1' feature_type='option'>
+		<feature feature_id='181' selected_option_id='1' sys_default_option_id='1' feature_type='option'>
 			<feature_name>Intel(R) Turbo Boost Technology</feature_name>
 			<option option_id='1'><option_name>Enabled</option_name></option>
 			<option option_id='2'><option_name>Disabled</option_name></option>
 		</feature>
 
-		<feature feature_id='142' selection_option_id='3' sys_default_option_id='1' feature_type='option'>
+		<feature feature_id='142' selected_option_id='3' sys_default_option_id='1' feature_type='option'>
 			<feature_name>Thermal Configuration</feature_name>
 			<option option_id='1'><option_name>Optimal Cooling</option_name></option>
 			<option option_id='2'><option_name>Increased Cooling</option_name></option>
