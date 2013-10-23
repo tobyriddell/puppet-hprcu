@@ -68,7 +68,8 @@ hprcuXml.root.elements.each('/hprcu/feature') { |feature|
 
 	feature.elements.each('option') { |option| 
 		option.elements.each('option_name') { |on| 
-			validValues.push(':' + makeValid(on.text))
+#			validValues.push(':' + makeValid(on.text))
+			validValues.push('"' + on.text + '"')
 		}
 	}
 
