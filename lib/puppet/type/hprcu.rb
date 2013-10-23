@@ -14,27 +14,27 @@ Puppet::Type.newtype(:hprcu) do
 	end
 
 	newproperty(:embeddedserialport) do
-		newvalues(:com1irq4io3f8h3ffh, :com2irq3io2f8h2ffh, :com3irq5io3e8h3efh, :disabled)
+		newvalues("COM 1; IRQ4; IO: 3F8h-3FFh", "COM 2; IRQ3; IO: 2F8h-2FFh", "COM 3; IRQ5; IO: 3E8h-3EFh", "Disabled")
 	end
 
 	newproperty(:virtualserialport) do
-		newvalues(:com1irq4io3f8h3ffh, :com2irq3io2f8h2ffh, :com3irq5io3e8h3efh, :disabled)
+		newvalues("COM 1; IRQ4; IO: 3F8h-3FFh", "COM 2; IRQ3; IO: 2F8h-2FFh", "COM 3; IRQ5; IO: 3E8h-3EFh", "Disabled")
 	end
 
 	newproperty(:noexecutememoryprotection) do
-		newvalues(:enabled, :disabled)
+		newvalues("Enabled", "Disabled")
 	end
 
 	newproperty(:intelrhyperthreadingoptions) do
-		newvalues(:enabled, :disabled)
+		newvalues("Enabled", "Disabled")
 	end
 
 	newproperty(:intelrturboboosttechnology) do
-		newvalues(:enabled, :disabled)
+		newvalues("Enabled", "Disabled")
 	end
 
 	newproperty(:thermalconfiguration) do
-		newvalues(:optimalcooling, :increasedcooling, :maximumcooling)
+		newvalues("Optimal Cooling", "Increased Cooling", "Maximum Cooling")
 	end
 
 end
