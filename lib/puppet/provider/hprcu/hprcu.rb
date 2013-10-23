@@ -18,9 +18,9 @@ require 'erb'
 require 'tempfile'
 
 Puppet::Type.type(:hprcu).provide(:hprcu) do
-#    commands :hprcu => '/usr/bin/hprcu'
+    commands :hprcu => '/usr/bin/hprcu'
 # For testing:
-    commands :hprcu => '/home/toby/Dev/Puppet/puppet-hprcu/fakehprcu'
+#    commands :hprcu => '/home/toby/Dev/Puppet/puppet-hprcu/fakehprcu'
 
     # No XML until fetched
     $hprcuXML = :absent
@@ -51,7 +51,6 @@ EOT
   # This is a modified version of mk_resource_methods from provider.rb
   def self.my_mk_resource_methods
     [resource_type.validproperties, resource_type.parameters].flatten.each do |attr|
-#      attr = symbolize(attr)
       if attr.class != Symbol
         attr = attr.intern
       end
@@ -105,57 +104,9 @@ EOT
     end
 
     $property2FeatureIdMap = {}
-    $hprcuXml.elements.each('/hprcu/feature') { |feature|
-      featureName = makeValid(feature.elements['feature_name'].text)
-      featureId = feature.attributes['feature_id']
-      $property2FeatureIdMap[featureName.to_sym] = featureId
-    }
-
     $value2SelectionOptionIdMap = {}
     $propertyName2SysDefaultOptionIdMap = {}
     propertyLookup = {}
-#    require 'ruby-debug';debugger
-    $hprcuXml.elements.each('/hprcu/feature[@feature_type="option"]') { |feature|
-      featureName = makeValid(feature.elements['feature_name'].text).to_sym
-      $value2SelectionOptionIdMap[featureName] = {}
-      sysDefaultOptionId = makeValid(feature.attributes['sys_default_option_id'])
-
-      optionName2Id = {}
-      feature.get_elements('option').each { |option| 
-        optionId = option.attributes['option_id']
-        optionName = option.get_elements('option_name').first.get_text.to_s
-#        optionName2Id[makeValid(optionName).to_sym] = optionId
-        optionName2Id[optionName] = optionId
-      }
-
-      $value2SelectionOptionIdMap[featureName] = optionName2Id
-      $propertyName2SysDefaultOptionIdMap[featureName] = sysDefaultOptionId
-
-# TODO: Potentially eliminate the second loop through the XML that follows by implementing the followig commented code - need to test
-#      selectedOptionId = feature.attributes['selected_option_id']
-#      optionId2Name = optionName2Id.invert
-#      propertyLookup[featureName] = optionId2Name[selectedOptionId].to_sym
-    } 
-
-    # Create a new instance of the provider describing the current state
-    $hprcuXml.elements.each('/hprcu/feature[@feature_type="option"]') { |feature|
-      featureName = makeValid(feature.elements['feature_name'].text).to_sym
-
-      selectedOptionId = feature.attributes['selected_option_id']
-
-      # TODO: Why not just invert optionName2Id and do one loop over all the feature elements instead of two?
-      optionId2Name = {}
-      feature.get_elements('option').each { |option| 
-        optionId = option.attributes['option_id']
-        optionName = option.get_elements('option_name').first.get_text.to_s
-#        optionId2Name[optionId] = makeValid(optionName)
-        optionId2Name[optionId] = optionName
-      }
-    require 'ruby-debug';debugger
-  
-#      propertyLookup[featureName] = optionId2Name[selectedOptionId].to_sym
-      propertyLookup[featureName] = optionId2Name[selectedOptionId]
-    }
 
     # Set some other properties that don't come from the XML
     propertyLookup[:name] = 'default'
@@ -165,8 +116,31 @@ EOT
     # is absent, Puppet ignores any specified resource property."
     propertyLookup[:ensure] = :present
 
+    # Iterate over features in populate propertyLookup in preparation for creating 
+    # a new object with the properties and their values defined
+    $hprcuXml.elements.each('/hprcu/feature[@feature_type="option"]') { |feature|
+      featureName = makeValid(feature.elements['feature_name'].text).to_sym
+      $property2FeatureIdMap[featureName] = feature.attributes['feature_id']
+
+      $value2SelectionOptionIdMap[featureName] = {}
+      sysDefaultOptionId = feature.attributes['sys_default_option_id']
+      $propertyName2SysDefaultOptionIdMap[featureName] = sysDefaultOptionId
+
+      optionName2Id = {}
+      feature.get_elements('option').each { |option| 
+        optionId = option.attributes['option_id']
+        optionName = option.elements['option_name'].text
+        optionName2Id[optionName] = optionId
+      }
+      $value2SelectionOptionIdMap[featureName] = optionName2Id
+
+      selectedOptionId = feature.attributes['selected_option_id']
+      optionId2Name = optionName2Id.invert
+      propertyLookup[featureName] = optionId2Name[selectedOptionId]
+    } 
+
     # Return an array containing a single instance of the resource (by definition there 
-    # is only only one instance of the BIOS parameters per host)
+    # is only only one instance of the BIOS settings per host)
     [ new(propertyLookup) ]
   end
 
@@ -209,10 +183,10 @@ EOT
 
   def flush
     recordOfChange = '/tmp/hprcu_changes'
-    recordFile = File.open(recordOfChange, 'w+')
+    recordFile = File.open(recordOfChange, 'a')
     @property_flush.keys.each { |property|
-      recordFile.write( sprintf("%s: Changing %s to %s", Time.now, property, @property_flush[property] ))
-      puts sprintf("Changing %s to %s", property, @property_flush[property])
+      recordFile.write( sprintf("%s: Changing '%s' to '%s'\n", Time.now, property, @property_flush[property] ))
+      puts sprintf("Changing '%s' to '%s'", property, @property_flush[property])
       $hprcuXml = modifyXml(property)
     }
     recordFile.close
