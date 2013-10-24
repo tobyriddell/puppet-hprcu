@@ -11,17 +11,19 @@ Puppet type &amp; provider to modify BIOS of HP servers using hprcu
 
 In a manifest:
 
-<code>hprcu { 'default':
-	intelrhyperthreadingoptions = 'enabled' 
-}</code>
+<pre><code>hprcu { 'default':
+	intelrhyperthreadingoptions = 'Enabled' 
+}</code></pre>
 
 In a class:
 
-<code>class energysaving {
+<pre><code>
+class { 'energysaving':
 	hprcu { 'default':
-
+		intelrhyperthreadingoptions => 'Enabled',
 	}
-}</code>
+}
+</code></pre>
 
 Notes: 
 
