@@ -18,7 +18,7 @@ In a manifest:
 In a class:
 
 <pre><code>
-class { 'energysaving':
+class { 'hyperthreading_on':
 	hprcu { 'default':
 		intelrhyperthreadingoptions => 'Enabled',
 	}
