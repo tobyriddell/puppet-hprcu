@@ -11,6 +11,15 @@ require 'puppet'
 require 'rexml/document'
 require 'erb'
 
+# Parse command line
+if ! ( ARGV[0].nil? or ARGV[0] == '-' ) # Input
+  $stdin.reopen(ARGV[0], "r")
+end
+
+if ! ( ARGV[1].nil? or ARGV[1] == '-' ) # Output
+  $stdout.reopen(ARGV[1], "w")
+end
+
 puts <<EOT
 # hprcu type
 
