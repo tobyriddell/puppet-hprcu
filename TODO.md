@@ -1,2 +1,2 @@
-- [ ] enhance gen_hprcu_type.rb so that it accepts input and output file names, and can also act as a filter (i.e. use '-' for stdin and/or stdout
-- [ ] 
+- [x] enhance gen_hprcu_type.rb so that it accepts input and output file names, and can also act as a filter (i.e. use '-' for stdin and/or stdout
+- [ ] add copyright
