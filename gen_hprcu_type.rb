@@ -12,12 +12,22 @@ require 'rexml/document'
 require 'erb'
 
 # Parse command line
-if ! ( ARGV[0].nil? or ARGV[0] == '-' ) # Input
-  $stdin.reopen(ARGV[0], "r")
+begin
+  if ! ( ARGV[0].nil? or ARGV[0] == '-' ) # Input
+    $stdin.reopen(ARGV[0], "r")
+  end
+rescue Exception
+  STDERR.puts "Failed to open input file: #{$!}"
+  raise
 end
 
-if ! ( ARGV[1].nil? or ARGV[1] == '-' ) # Output
-  $stdout.reopen(ARGV[1], "w")
+begin
+  if ! ( ARGV[1].nil? or ARGV[1] == '-' ) # Output
+    $stdout.reopen(ARGV[1], "w")
+  end
+rescue Exception
+  STDERR.puts "Failed to open output file: #{$!}"
+  raise
 end
 
 puts <<EOT
