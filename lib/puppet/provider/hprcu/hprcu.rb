@@ -18,15 +18,15 @@ require 'erb'
 require 'tempfile'
 
 Puppet::Type.type(:hprcu).provide(:hprcu) do
-    commands :hprcu => '/usr/bin/hprcu'
+  commands :hprcu => '/usr/bin/hprcu'
 # For testing:
-#    commands :hprcu => '/home/toby/Dev/Puppet/puppet-hprcu/fakehprcu'
+#  commands :hprcu => '/home/toby/Dev/Puppet/puppet-hprcu/fakehprcu'
 
-    # No XML until fetched
-    $hprcuXML = :absent
+  # No XML until fetched
+  $hprcuXml = nil
 
-    # Record any changes made by the provider
-    $changes = []
+  # Record any changes made by the provider
+  $changes = []
 
   $xsltTemplate = <<EOT
 <?xml version="1.0"?>
@@ -68,7 +68,7 @@ EOT
   my_mk_resource_methods
 
   # Map from (e.g.) 'Intel(R) Hyperthreading Options' to 'intelrhyperthreadingoptions'
-  # Note that the names of the setters must be 'Puppet-friendly', i.e. valid as per 
+  # Note that the names of setter methods must be 'Puppet-friendly', i.e. valid as per 
   # grammar.ra in the Puppet source
   $map2Valid = {} 
   def self.makeValid(invalid)
@@ -85,10 +85,10 @@ EOT
   end
 
   def exists?
-    # Must return 'true' here because as per p.46 of Puppet Types & Providers:
-    # "properties other than ensure are only *individually* managed when ensure
-    # is set to present and the resource already exists. When a resource state
-    # is absent, Puppet ignores any specified resource property."
+    # Must return 'true' here because as per p.46 of 'Puppet Types & Providers':
+    #   "properties other than ensure are only *individually* managed when ensure
+    #   is set to present and the resource already exists. When a resource state
+    #   is absent, Puppet ignores any specified resource property."
     true # Equivalent to: @property_hash[:ensure] == :present, because we 
          # force {:ensure => :present} in self.instances
   end
@@ -110,10 +110,10 @@ EOT
 
     # Set some other properties that don't come from the XML
     propertyLookup[:name] = 'default'
-    # Force :ensure = :present because, as per p.46 of Puppet Types & Providers,
-    # "properties other than ensure are only *individually* managed when ensure
-    # is set to present and the resource already exists. When a resource state
-    # is absent, Puppet ignores any specified resource property."
+    # Force :ensure = :present because, as per p.46 of 'Puppet Types & Providers':
+    #   "properties other than ensure are only *individually* managed when ensure
+    #   is set to present and the resource already exists. When a resource state
+    #   is absent, Puppet ignores any specified resource property."
     propertyLookup[:ensure] = :present
 
     # Iterate over features in populate propertyLookup in preparation for creating 
@@ -199,7 +199,7 @@ EOT
     @property_hash = resource.to_hash
   end
 
-  def initialize(value={})
+  def initialize(value = {})
     super(value)
     @property_flush = {}
   end
