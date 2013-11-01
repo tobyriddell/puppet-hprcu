@@ -31,6 +31,15 @@ Notes:
 * Property names must conform to the Puppet grammar, as defined in grammar.ra in the Puppet source. Thus 'Intel (R) Hyperthreading Options' is represented by 'intelrhyperthreadingoptions'.
 * You may want to run this code (and therefore hprcu) only when required - running hprcu may interfere with reading the realtime clock from the CMOS (see footnote 4 here: http://mjg59.dreamwidth.org/25686.html)
 
+# Regenerating lib/puppet/type/hprcu.rb
+
+It may be necessary to regenerate the Ruby code for the provider if new BIOS settings are added or names change. Here's an example of how to do this:
+
+<pre><code>
+hprcu -s -f /tmp/hprcu.xml
+./gen_hprcu_type.rb /tmp/hprcu.xml lib/puppet/type/hprcu.rb
+</code></pre>
+
 # Dependencies
 
 This code requires Gregoire Lejeune's ruby-xslt: https://github.com/glejeune/ruby-xslt
