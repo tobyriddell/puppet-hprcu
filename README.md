@@ -30,6 +30,10 @@ Notes:
 * There's only one collection of BIOS settings per host so there's only one hprcu resource per host, and its name is 'default'.
 * Property names must conform to the Puppet grammar, as defined in grammar.ra in the Puppet source. Thus 'Intel (R) Hyperthreading Options' is represented by 'intelrhyperthreadingoptions'.
 
+# Dependencies
+
+This code requires Gregoire Lejeune's ruby-xslt: https://github.com/glejeune/ruby-xslt
+
 # Design choices
 
 It would be ideal to have a type for managing BIOS settings and a provider per-vendor to manage resource properties for a particular vendor platform. However, the target is a gradually moving one: vendors have different names for the same BIOS setting, BIOS revisions can change property names ('name-creep'), new hardware may introduce new settings. Owing to the fact that Puppet doesn't support dynamic property names (see http://grokbase.com/t/gg/puppet-dev/1254htyrr9/how-to-allow-user-specified-property-names-in-provider-code) the names of properties must be pre-defined.
