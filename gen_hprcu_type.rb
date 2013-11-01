@@ -72,9 +72,7 @@ $newpropertyTemplate = <<EOT
 
 EOT
 
-hprcuFilename = 'hprcu_sample.xml'
-hprcuFileHandle = File.open('hprcu_sample.xml', 'r');
-hprcuXml = REXML::Document.new hprcuFileHandle.read()
+hprcuXml = REXML::Document.new $stdin
 
 hprcuXml.root.elements.each('/hprcu/feature') { |feature| 
   next unless feature.attributes['feature_type'] == 'option'
