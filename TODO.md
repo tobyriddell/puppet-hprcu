@@ -1,3 +1,4 @@
 - [x] enhance gen_hprcu_type.rb so that it accepts input and output file names, and can also act as a filter (i.e. use '-' for stdin and/or stdout
 - [x] bring README.md up to date wrt. property values (i.e. no longer any need for them to be munged)
 - [x] add copyright
+- [ ] add option to control creation of /tmp/hprcu_changes ('logchanges'?), update README.md with documentation re. /tmp/hprcu_changes
