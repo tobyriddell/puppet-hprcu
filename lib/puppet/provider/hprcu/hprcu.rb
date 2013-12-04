@@ -18,7 +18,8 @@ require 'erb'
 require 'tempfile'
 
 Puppet::Type.type(:hprcu).provide(:hprcu) do
-  commands :hprcu => '/usr/bin/hprcu'
+#  commands :hprcu => '/usr/bin/hprcu'
+  commands :hprcu => '/sbin/hp-rcu'
 # For testing:
 #  commands :hprcu => '/home/toby/Dev/Puppet/puppet-hprcu/fakehprcu'
 
@@ -70,18 +71,27 @@ EOT
   # Map from (e.g.) 'Intel(R) Hyperthreading Options' to 'intelrhyperthreadingoptions'
   # Note that the names of setter methods must be 'Puppet-friendly', i.e. valid as per 
   # grammar.ra in the Puppet source
-  $map2Valid = {} 
-  def self.makeValid(invalid)
-    if ! $map2Valid.has_key?(invalid)
+  $map2ValidName = {} 
+  def self.makeValidName(invalid)
+    if ! $map2ValidName.has_key?(invalid)
       # Make into a valid puppet symbol by:
       # 1) Changing to lowercase
       # 2) Removing special characters
       # 3) Prepending 'i' if it starts with digits
       # 4) Removing dots if it ends with dots + numbers
       valid = invalid.downcase.gsub(/[- ()_\/:;,]/,'').sub(/^([0-9]+)/, 'i\1').sub(/\.([0-9]+)$/, '\1')
-      $map2Valid[invalid] = valid
+      $map2ValidName[invalid] = valid
     end
-    $map2Valid[invalid]
+    $map2ValidName[invalid]
+  end
+  # A variation of the above function, this one without the 'downcase'
+  $map2ValidValue = {} 
+  def self.makeValidValue(invalid)
+    if ! $map2ValidValue.has_key?(invalid)
+      valid = invalid.gsub(/[- ()_\/:;,]/,'').sub(/^([0-9]+)/, 'i\1').sub(/\.([0-9]+)$/, '\1')
+      $map2ValidValue[invalid] = valid
+    end
+    $map2ValidValue[invalid]
   end
 
   def exists?
@@ -119,7 +129,7 @@ EOT
     # Iterate over features in populate propertyLookup in preparation for creating 
     # a new object with the properties and their values defined
     $hprcuXml.elements.each('/hprcu/feature[@feature_type="option"]') { |feature|
-      featureName = makeValid(feature.elements['feature_name'].text).to_sym
+      featureName = makeValidName(feature.elements['feature_name'].text).to_sym
       $property2FeatureIdMap[featureName] = feature.attributes['feature_id']
 
       $value2SelectionOptionIdMap[featureName] = {}
@@ -129,7 +139,7 @@ EOT
       optionName2Id = {}
       feature.get_elements('option').each { |option| 
         optionId = option.attributes['option_id']
-        optionName = option.elements['option_name'].text
+        optionName = makeValidValue(option.elements['option_name'].text)
         optionName2Id[optionName] = optionId
       }
       $value2SelectionOptionIdMap[featureName] = optionName2Id
