@@ -1,6 +1,4 @@
 # hprcu provider
-
-# Memo: debugging techniques:
 #
 # require 'ruby-debug';debugger
 #
@@ -24,10 +22,14 @@ require 'tempfile'
 
 Puppet::Type.type(:hprcu).provide(:hprcu) do
   # Look for hprcu binary
-  if File.stat('/usr/bin/hprcu')
+  hprcuSearch = [ '/usr/bin/hprcu', '/sbin/hp-rcu' ] # TODO: finish implementing this
+
+  if File.exists?('/foo/bin/hprcu')
     commands :hprcu => '/usr/bin/hprcu'
-  elsif File.stat('/sbin/hp-rcu')
+  elsif File.exists?('/sbin/hp-rcu')
     commands :hprcu => '/sbin/hp-rcu'
+  elsif File.exists?('/home/toby/Dev/Puppet/puppet-hprcu')
+    commands :hprcu => '/home/toby/Dev/Puppet/puppet-hprcu/fakehprcu'
   else
     fail "hprcu binary not found"
   end
@@ -124,8 +126,6 @@ EOT
     #   is set to present and the resource already exists. When a resource state
     #   is absent, Puppet ignores any specified resource property."
     propertyLookup[:ensure] = :present
-    propertyLookup[:flagchanges] = flagchanges
-    propertyLookup[:flagfile] = flagfile
 
     # Iterate over features in populate propertyLookup in preparation for creating 
     # a new object with the properties and their values defined
@@ -203,9 +203,9 @@ EOT
     hprcu('-l', '-f', tempfile.path)
 
     # Write to flag file if required
-    if @property_hash[:flagchanges] == :true
-      flagfilePath = @property_hash[:flagfile]
-      if @property_hash[:appendchanges] == :true
+    if @resource.flagchanges == :true
+      flagfilePath = @resource.flagfile
+      if @resource.appendchanges == :true
         flagfile = File.open(flagfilePath, 'a') # TODO: error-checking
       else 
         flagfile = File.open(flagfilePath, 'w') # TODO: error-checking
