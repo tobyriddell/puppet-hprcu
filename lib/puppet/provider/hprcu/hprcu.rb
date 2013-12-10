@@ -22,17 +22,17 @@ require 'tempfile'
 
 Puppet::Type.type(:hprcu).provide(:hprcu) do
   # Look for hprcu binary
-  hprcuSearch = [ '/usr/bin/hprcu', '/sbin/hp-rcu' ] # TODO: finish implementing this
-
-  if File.exists?('/foo/bin/hprcu')
-    commands :hprcu => '/usr/bin/hprcu'
-  elsif File.exists?('/sbin/hp-rcu')
-    commands :hprcu => '/sbin/hp-rcu'
-  elsif File.exists?('/home/toby/Dev/Puppet/puppet-hprcu')
-    commands :hprcu => '/home/toby/Dev/Puppet/puppet-hprcu/fakehprcu'
-  else
-    fail "hprcu binary not found"
+  ['/usr/bin/hprcu', '/sbin/hp-rcu'].each do |candidate|
+    if File.exists?(candidate)
+      commands :hprcu => candidate
+      foundHprcu = true
+      break
+    end
   end
+
+  if ! foundHprcu
+    fail "hprcu binary not found (tried #{hprcuSearch})"
+  end 
 
   # No XML until fetched
   $hprcuXml = nil
@@ -203,9 +203,9 @@ EOT
     hprcu('-l', '-f', tempfile.path)
 
     # Write to flag file if required
-    if @resource.flagchanges == :true
-      flagfilePath = @resource.flagfile
-      if @resource.appendchanges == :true
+    if @resource[:flagchanges] == :true
+      flagfilePath = @resource[:flagfile]
+      if @resource[:appendchanges] == :true
         flagfile = File.open(flagfilePath, 'a') # TODO: error-checking
       else 
         flagfile = File.open(flagfilePath, 'w') # TODO: error-checking
