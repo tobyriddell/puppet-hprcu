@@ -26,7 +26,7 @@ Puppet::Type.type(:hprcu).provide(:hprcu) do
   # Look for hprcu binary
   if File.stat('/usr/bin/hprcu')
     commands :hprcu => '/usr/bin/hprcu'
-  else if File.stat('/sbin/hp-rcu')
+  elsif File.stat('/sbin/hp-rcu')
     commands :hprcu => '/sbin/hp-rcu'
   else
     fail "hprcu binary not found"
