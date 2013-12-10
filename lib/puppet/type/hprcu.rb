@@ -13,6 +13,38 @@ Puppet::Type.newtype(:hprcu) do
 	newparam(:name, :namevar => true) do
 	end
 
+	newparam(:hprcubinary) do
+    defaultto('/usr/bin/hprcu')
+    validate do |path|
+      if ! path.start_with?('/')
+        fail("Path to hprcu binary must start with '/'")
+      else if ! File.stat(path)
+        fail("hprcu binary does not exist (%{path})")
+      end
+    end
+	end
+
+	newparam(:flagchanges) do
+    newvalues(:true, :false)
+    defaultto(:false)
+	end
+
+	newparam(:appendchanges) do
+    newvalues(:true, :false)
+    defaultto(:false)
+	end
+
+  newparam(:flagfile) do
+    defaultto('/tmp/hprcu_changes')
+    validate do |path|
+      if path.include?('..')
+        fail("Path to flagfile must not contains '..'")
+      else if ! ( path.start_with?('/tmp') or path.start_with?('/var/tmp') )
+        fail("Path to flagfile must start with '/tmp' or '/var/tmp'")
+      end
+    end
+  end
+
 	newproperty(:embeddedserialport) do
 		newvalues("COM 1; IRQ4; IO: 3F8h-3FFh", "COM 2; IRQ3; IO: 2F8h-2FFh", "COM 3; IRQ5; IO: 3E8h-3EFh", "Disabled")
 	end

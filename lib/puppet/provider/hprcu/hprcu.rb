@@ -4,11 +4,16 @@
 #
 # require 'ruby-debug';debugger
 #
+# Puppet.debug('foo')
+#
 # set_trace_func proc { |event, file, line, id, binding, classname|
 #   printf "%8s %s:%-2d %10s %8s\n", event, file, line, id, classname
 # }
 #
 # $x = inline_template("<%= require 'ruby-debug';debugger; puts 'foo' %>")
+#
+# require 'ruby-debug';
+# Debugger.start(:post_mortem => true)
 
 require 'puppet'
 require 'rexml/document'
@@ -18,15 +23,21 @@ require 'erb'
 require 'tempfile'
 
 Puppet::Type.type(:hprcu).provide(:hprcu) do
-#  commands :hprcu => '/usr/bin/hprcu'
-  commands :hprcu => '/sbin/hp-rcu'
-# For testing:
-#  commands :hprcu => '/home/toby/Dev/Puppet/puppet-hprcu/fakehprcu'
+  # Look for hprcu binary
+  if @property_hash.has_key?(:hprcubinary)
+    commands :hprcu => @property_hash[:hprcubinary]
+  else if File.stat('/usr/bin/hprcu')
+    commands :hprcu => '/usr/bin/hprcu'
+  else if File.stat('/sbin/hp-rcu')
+    commands :hprcu => '/sbin/hp-rcu'
+  else
+    fail "hprcu binary not found"
+  end
 
   # No XML until fetched
   $hprcuXml = nil
 
-  # Record any changes made by the provider
+  # Record of changes made
   $changes = []
 
   $xsltTemplate = <<EOT
@@ -115,10 +126,12 @@ EOT
     #   is set to present and the resource already exists. When a resource state
     #   is absent, Puppet ignores any specified resource property."
     propertyLookup[:ensure] = :present
+    propertyLookup[:flagchanges] = flagchanges
+    propertyLookup[:flagfile] = flagfile
 
     # Iterate over features in populate propertyLookup in preparation for creating 
     # a new object with the properties and their values defined
-    $hprcuXml.elements.each('/hprcu/feature[@feature_type="option"]') { |feature|
+    $hprcuXml.elements.each('/hprcu/feature[@feature_type="option"]') do |feature|
       featureName = makeValid(feature.elements['feature_name'].text.downcase).to_sym
       $property2FeatureIdMap[featureName] = feature.attributes['feature_id']
 
@@ -127,17 +140,17 @@ EOT
       $propertyName2SysDefaultOptionIdMap[featureName] = sysDefaultOptionId
 
       optionName2Id = {}
-      feature.get_elements('option').each { |option| 
+      feature.get_elements('option').each do |option| 
         optionId = option.attributes['option_id']
         optionName = makeValid(option.elements['option_name'].text).to_sym
         optionName2Id[optionName] = optionId
-      }
+      end
       $value2SelectionOptionIdMap[featureName] = optionName2Id
 
       selectedOptionId = feature.attributes['selected_option_id']
       optionId2Name = optionName2Id.invert
       propertyLookup[featureName] = optionId2Name[selectedOptionId]
-    } 
+    end
 
     # Return an array containing a single instance of the resource (by definition there 
     # is only only one instance of the BIOS settings per host)
@@ -155,11 +168,9 @@ EOT
   end
 
   def self.prefetch(resources)
-    Puppet.debug('self.prefetch')
-
     hprcus = instances
     resources.keys.each do |name|
-      if provider = instances.find{ |inst| inst.name == name }
+      if provider = instances.find { |inst| inst.name == name }
         resources[name].provider = provider
       end
     end
@@ -182,19 +193,30 @@ EOT
   end
 
   def flush
-    recordOfChange = '/tmp/hprcu_changes'
-    recordFile = File.open(recordOfChange, 'a')
-    @property_flush.keys.each { |property|
-      recordFile.write( sprintf("%s: Changing '%s' to '%s'\n", Time.now, property, @property_flush[property] ))
-      puts sprintf("Changing '%s' to '%s'", property, @property_flush[property])
+    # Modify XML setting each of the required settings
+    @property_flush.keys.each do |property|
       $hprcuXml = modifyXml(property)
-    }
-    recordFile.close
+    end
 
+    # Write modified XML to temp. file and load into BIOS using hprcu
     tempfile = Tempfile.new('puppethprcu')
     tempfile.write($hprcuXml)
     tempfile.close
     hprcu('-l', '-f', tempfile.path)
+
+    # Write to flag file if required
+    if @property_hash[:flagchanges] == :true
+      flagfilePath = @property_hash[:flagfile]
+      if @property_hash[:appendchanges] == :true
+        flagfile = File.open(flagfilePath, 'a') # TODO: error-checking
+      else 
+        flagfile = File.open(flagfilePath, 'w') # TODO: error-checking
+      end
+      @property_flush.keys.each do |property|
+        flagfile.write( sprintf("%s: Changed '%s' to '%s'\n", Time.now, property, @property_flush[property] ))
+      end
+      flagfile.close
+    end
 
     @property_hash = resource.to_hash
   end
