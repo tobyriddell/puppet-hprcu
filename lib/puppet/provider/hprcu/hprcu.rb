@@ -24,12 +24,8 @@ require 'tempfile'
 
 Puppet::Type.type(:hprcu).provide(:hprcu) do
   # Look for hprcu binary
-  if @property_hash.has_key?(:hprcubinary)
-    commands :hprcu => @property_hash[:hprcubinary]
-  elsif File.stat('/usr/bin/hprcu')
-    commands :hprcu => '/usr/bin/hprcu'
-  elsif File.stat('/sbin/hp-rcu')
-    commands :hprcu => '/sbin/hp-rcu'
+  if File.stat(hprcubinary)
+    commands :hprcu => hprcubinary
   else
     fail "hprcu binary not found"
   end
