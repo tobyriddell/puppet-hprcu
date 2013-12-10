@@ -26,9 +26,9 @@ Puppet::Type.type(:hprcu).provide(:hprcu) do
   # Look for hprcu binary
   if @property_hash.has_key?(:hprcubinary)
     commands :hprcu => @property_hash[:hprcubinary]
-  else if File.stat('/usr/bin/hprcu')
+  elsif File.stat('/usr/bin/hprcu')
     commands :hprcu => '/usr/bin/hprcu'
-  else if File.stat('/sbin/hp-rcu')
+  elsif File.stat('/sbin/hp-rcu')
     commands :hprcu => '/sbin/hp-rcu'
   else
     fail "hprcu binary not found"
