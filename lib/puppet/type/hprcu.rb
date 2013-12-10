@@ -18,7 +18,7 @@ Puppet::Type.newtype(:hprcu) do
     validate do |path|
       if ! path.start_with?('/')
         fail("Path to hprcu binary must start with '/'")
-      else if ! File.stat(path)
+      elsif ! File.stat(path)
         fail("hprcu binary does not exist (%{path})")
       end
     end
@@ -39,7 +39,7 @@ Puppet::Type.newtype(:hprcu) do
     validate do |path|
       if path.include?('..')
         fail("Path to flagfile must not contains '..'")
-      else if ! ( path.start_with?('/tmp') or path.start_with?('/var/tmp') )
+      elsif ! ( path.start_with?('/tmp') or path.start_with?('/var/tmp') )
         fail("Path to flagfile must start with '/tmp' or '/var/tmp'")
       end
     end
