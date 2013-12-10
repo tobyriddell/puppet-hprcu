@@ -13,17 +13,6 @@ Puppet::Type.newtype(:hprcu) do
 	newparam(:name, :namevar => true) do
 	end
 
-	newparam(:hprcubinary) do
-    defaultto('/usr/bin/hprcu')
-    validate do |path|
-      if ! path.start_with?('/')
-        fail("Path to hprcu binary must start with '/'")
-      elsif ! File.stat(path)
-        fail("hprcu binary does not exist (%{path})")
-      end
-    end
-	end
-
 	newparam(:flagchanges) do
     newvalues(:true, :false)
     defaultto(:false)
