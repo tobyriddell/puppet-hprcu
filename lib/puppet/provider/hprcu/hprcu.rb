@@ -72,7 +72,7 @@ EOT
       end
 
       define_method(attr.to_s + "=") do |val|
-        @property_flush[attr] = val
+        @property_flush[attr] = val.to_s
       end
     end
   end
@@ -140,7 +140,7 @@ EOT
       optionName2Id = {}
       feature.get_elements('option').each do |option| 
         optionId = option.attributes['option_id']
-        optionName = makeValid(option.elements['option_name'].text).to_sym
+        optionName = option.elements['option_name'].text
         optionName2Id[optionName] = optionId
       end
       $value2SelectionOptionIdMap[featureName] = optionName2Id
