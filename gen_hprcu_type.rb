@@ -34,7 +34,22 @@ puts <<EOT
 # hprcu type
 
 Puppet::Type.newtype(:hprcu) do
-	@doc = "" # TODO
+	@doc = "This type/provider uses the hprcu binary to modify BIOS settings on HP servers. 
+
+Usage:
+
+  puppet resource hprcu
+
+  puppet apply -e 'hprcu{"default": intelrhyperthreadingoptions => "Disabled"}'
+
+Note: the name of the resource is hardcoded to 'default'. This is because each server has only one set of BIOS settings, when represented as a resource they needed a name, and 'default' seemed like a sensible choice.
+
+The names of the settings supported by BIOS revisions varies. The gen_hprcu_type.rb script can be used to regenerate the Puppet type to reflect changes in the setting names:
+
+hprcu -s -f /tmp/hprcu.xml
+./gen_hprcu_type.rb /tmp/hprcu.xml > lib/puppet/type/hprcu.rb
+
+Supported servers are known to include HP DL380 Gen8."
 
 	# Type must be ensurable as we must use exists?, because as per p. 46 of 
 	# Puppet Types and Providers: properties other than ensure are only 
