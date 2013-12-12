@@ -22,6 +22,7 @@ require 'tempfile'
 
 Puppet::Type.type(:hprcu).provide(:hprcu) do
   # Look for hprcu binary
+  foundHprcu = false
   ['/usr/bin/hprcu', '/sbin/hp-rcu'].each do |candidate|
     if File.exists?(candidate)
       commands :hprcu => candidate
