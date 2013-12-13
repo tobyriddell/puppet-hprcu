@@ -3,6 +3,9 @@
 - [x] add copyright
 - [x] add option to control creation of flag file
 - [x] add configurable path tp hprcu binary (with sensible defaults)
-- [ ] update README with info. re. flagfile, hprcu binary path
+- [x] update README with info. re. flagfile
+- [ ] update README with info. re. hprcu binary path
 - [ ] add documentation on type/provider (@doc)
 - [ ] add error-checking when opening files
+- [ ] enhance command-line arguments supported by gen_hprcu_type.rb to allow naming of the type that it creates (this allows a type named per-BIOS revision - different BIOS revisions have different names for settings, and hence may need a type that supports the various names)
+- [ ] when checking path to flag file, use 'absolute'
