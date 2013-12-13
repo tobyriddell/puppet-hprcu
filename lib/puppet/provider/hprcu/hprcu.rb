@@ -32,7 +32,7 @@ Puppet::Type.type(:hprcu).provide(:hprcu) do
   end
 
   if ! foundHprcu
-    fail "hprcu binary not found (tried #{hprcuSearch})"
+    fail "hprcu binary not found"
   end 
 
   # No XML until fetched
