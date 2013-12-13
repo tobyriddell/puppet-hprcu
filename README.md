@@ -25,6 +25,21 @@ class { 'hyperthreading_on':
 }
 </code></pre>
 
+With different versions of the class for different BIOS revisions:
+
+<pre><code>
+case $bios_release:
+	'09/12/2012': hprcu_09122012 {'default': intelrhyperthreadingoptions = 'Enabled' }
+	'08/11/2011': hprcu_08112011 {'default': intelhyperthreading = 'Enabled' }
+</code></pre>
+
+Type parameters:
+
+flagchanges - Boolean - whether changes made by the hprcu provider should be recorded in a file (defaults to false)
+flagfile - the path to the file where the changes will be recorded (must begin with /tmp or /var/tmp) (defaults to: "/tmp/hprcu_changes")
+appendchanges - whether to append changes to the flag file or overwrite it with each new change made by the provider
+ 
+
 Notes: 
 
 * There's only one collection of BIOS settings per host so there's only one hprcu resource per host, and its name is 'default'.
