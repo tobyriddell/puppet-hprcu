@@ -66,27 +66,6 @@ Supported servers are known to include HP DL380 Gen8."
 	newparam(:name, :namevar => true) do
 	end
 
-	newparam(:flagchanges) do
-		newvalues(:true, :false)
-		defaultto(:false)
-	end
-
-	newparam(:appendchanges) do
-		newvalues(:true, :false)
-		defaultto(:false)
-	end
-
-	newparam(:flagfile) do
-		defaultto('/tmp/hprcu_changes')
-		validate do |path|
-			if path.include?('..')
-				fail("Path to flagfile must not contains '..'")
-			elsif ! ( path.start_with?('/tmp') or path.start_with?('/var/tmp') )
-				fail("Path to flagfile must start with '/tmp' or '/var/tmp'")
-			end
-		end
-	end
-
 EOT
 
 # Map from (e.g.) 'Intel(R) Hyperthreading Options' to 'intelrhyperthreadingoptions'

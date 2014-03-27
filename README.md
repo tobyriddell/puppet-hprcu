@@ -7,12 +7,12 @@ Puppet type &amp; provider to modify BIOS of HP servers using hprcu
 
 <code>puppet resource hprcu</code>
 
-<code>puppet apply -e "hprcu{ 'default': intelrhyperthreadingoptions = 'Enabled' }"</code>
+<code>puppet apply -e "hprcu{ 'default': intelrhyperthreadingoptions => 'Enabled' }"</code>
 
 In a manifest:
 
 <pre><code>hprcu { 'default':
-	intelrhyperthreadingoptions = 'Enabled' 
+	intelrhyperthreadingoptions => 'Enabled' 
 }</code></pre>
 
 In a class:
@@ -29,8 +29,8 @@ With different versions of the class for different BIOS revisions:
 
 <pre><code>
 case $bios_release:
-	'09/12/2012': hprcu_09122012 {'default': intelrhyperthreadingoptions = 'Enabled' }
-	'08/11/2011': hprcu_08112011 {'default': intelhyperthreading = 'Enabled' }
+	'09/12/2012': hprcu_09122012 {'default': intelrhyperthreadingoptions => 'Enabled' }
+	'08/11/2011': hprcu_08112011 {'default': intelhyperthreading => 'Enabled' }
 </code></pre>
 
 Type parameters:
@@ -51,7 +51,7 @@ Notes:
 It may be necessary to regenerate the Ruby code for the provider if new BIOS settings are added or names change. Here's an example of how to do this:
 
 <pre><code>
-hprcu -s -f /tmp/hprcu.xml
+hprcu -a -s -f /tmp/hprcu.xml
 ./gen_hprcu_type.rb /tmp/hprcu.xml lib/puppet/type/hprcu.rb
 </code></pre>
 

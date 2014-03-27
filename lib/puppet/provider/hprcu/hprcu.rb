@@ -23,7 +23,7 @@ require 'tempfile'
 Puppet::Type.type(:hprcu).provide(:hprcu) do
   # Look for hprcu binary
   foundHprcu = false
-  ['/usr/bin/hprcu', '/sbin/hp-rcu'].each do |candidate|
+  ['/sbin/hprcu', '/sbin/hp-rcu'].each do |candidate|
     if File.exists?(candidate)
       commands :hprcu => candidate
       foundHprcu = true
@@ -159,7 +159,7 @@ EOT
   def self.fetchXml
     tempfile = Tempfile.new('puppethprcu')
     tempfile.close
-    hprcu('-s', '-f', tempfile.path)
+    hprcu('-a', '-s', '-f', tempfile.path)
 
     hprcuFileHandle = File.open(tempfile.path, 'r');
     $hprcuXml = REXML::Document.new hprcuFileHandle.read()
@@ -202,20 +202,6 @@ EOT
     tempfile.write($hprcuXml)
     tempfile.close
     hprcu('-l', '-f', tempfile.path)
-
-    # Write to flag file if required
-    if @resource[:flagchanges] == :true
-      flagfilePath = @resource[:flagfile]
-      if @resource[:appendchanges] == :true
-        flagfile = File.open(flagfilePath, 'a') # TODO: error-checking
-      else 
-        flagfile = File.open(flagfilePath, 'w') # TODO: error-checking
-      end
-      @property_flush.keys.each do |property|
-        flagfile.write( sprintf("%s: Changed '%s' to '%s'\n", Time.now, property, @property_flush[property] ))
-      end
-      flagfile.close
-    end
 
     @property_hash = resource.to_hash
   end
