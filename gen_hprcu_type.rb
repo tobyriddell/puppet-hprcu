@@ -45,7 +45,7 @@ Usage:
 
   puppet resource hprcu
 
-  puppet apply -e 'hprcu{"default": intelrhyperthreadingoptions => "Disabled"}'
+  puppet apply -e 'hprcu{\\\"default\\\": intelrhyperthreadingoptions => \\\"Disabled\\\"}'
 
 Note: the name of the resource is hardcoded to 'default'. This is because each server has only one set of BIOS settings, when represented as a resource they needed a name, and 'default' seemed like a sensible choice.
 
