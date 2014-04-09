@@ -201,7 +201,7 @@ EOT
     tempfile = Tempfile.new('puppethprcu')
     tempfile.write($hprcuXml)
     tempfile.close
-    hprcu('-l', '-f', tempfile.path)
+    hprcu('-a', '-l', '-f', tempfile.path)
 
     @property_hash = resource.to_hash
   end
