@@ -118,7 +118,7 @@ EOT
     $property2FeatureIdMap = {}
     $value2SelectionOptionIdMap = {}
     $propertyName2SysDefaultOptionIdMap = {}
-    propertyLookup = {}
+    propertyLookup = {} # TODO: need to populate this hash with key/value pairs consisting of the parameter name and the value :unsupported. These values will be overridden when the XML is processed, assuming they exist in the XML, and if they don't then the :unsupported value will remain.
 
     # Set some other properties that don't come from the XML
     propertyLookup[:name] = 'default'
