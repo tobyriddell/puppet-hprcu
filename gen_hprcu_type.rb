@@ -88,6 +88,7 @@ end
 $newpropertyTemplate = <<EOT
 	newproperty(<%= propertyName %>) do
 		newvalues(<%= validValues.join(', ') %>)
+    defaultto(:unsupported)
 	end
 
 EOT
@@ -97,7 +98,7 @@ hprcuXml = REXML::Document.new $stdin
 hprcuXml.root.elements.each('/hprcu/feature') { |feature| 
   next unless feature.attributes['feature_type'] == 'option'
 	propertyName = ''
-	validValues = []
+	validValues = ["unsupported"] # We hardcode 'unsupported' to allow the type to be used on hosts that don't support all parameters
 
 	feature.elements.each('feature_name') { |feature_name| 
 		propertyName = ':' + makeValid(feature_name.text)
