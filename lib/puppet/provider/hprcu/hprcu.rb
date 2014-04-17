@@ -31,9 +31,11 @@ Puppet::Type.type(:hprcu).provide(:hprcu) do
     end
   end
 
-  if ! foundHprcu
-    fail "hprcu binary not found"
-  end 
+  begin
+    foundHprcu
+  rescue Puppet::Error => e
+    false
+  end
 
   # No XML until fetched
   $hprcuXml = nil
@@ -200,7 +202,12 @@ EOT
   def flush
     # Modify XML setting each of the required settings
     @property_flush.keys.each do |property|
-      $hprcuXml = modifyXml(property)
+      # If the current value of a property is ':unsupported' then don't modify the XML
+      if @property_hash[property] == "unsupported"
+        Puppet.notice "not changing '" + property.to_s + "' property as it's not supported by this server's BIOS"
+      else
+        $hprcuXml = modifyXml(property)
+      end
     end
 
     # Write modified XML to temp. file and load into BIOS using hprcu

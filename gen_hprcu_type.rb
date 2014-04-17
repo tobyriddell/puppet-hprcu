@@ -51,7 +51,7 @@ Note: the name of the resource is hardcoded to 'default'. This is because each s
 
 The names of the settings supported by BIOS revisions varies. The gen_hprcu_type.rb script can be used to regenerate the Puppet type to reflect changes in the setting names:
 
-hprcu -s -f /tmp/hprcu.xml
+hprcu -a -s -f /tmp/hprcu.xml
 ./gen_hprcu_type.rb /tmp/hprcu.xml > lib/puppet/type/hprcu.rb
 
 Supported servers are known to include HP DL380 Gen8."
@@ -88,7 +88,6 @@ end
 $newpropertyTemplate = <<EOT
 	newproperty(<%= propertyName %>) do
 		newvalues(<%= validValues.join(', ') %>)
-		defaultto("unsupported")
 	end
 
 EOT
